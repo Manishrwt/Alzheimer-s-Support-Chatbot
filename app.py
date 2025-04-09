@@ -5,8 +5,14 @@ import json
 import os
 import re
 
-# ✅ Configure Gemini API
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# ✅ Load Gemini API key safely
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except KeyError:
+    st.error("❌ Gemini API Key not found! Please add it to .streamlit/secrets.toml or Streamlit Cloud secrets.")
+    st.stop()
+
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 
 # ✅ Streamlit Setup
