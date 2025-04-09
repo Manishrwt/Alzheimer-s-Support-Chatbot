@@ -22,6 +22,11 @@ model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 # ✅ Streamlit Setup
 st.set_page_config(page_title="🧠 Alzheimer's Support Chatbot BY MANISH_RAWAT", page_icon="🧠")
 st.title("🧠 Alzheimer's Support Chatbot \n\b BY MANISH_RAWAT")
+st.markdown("""
+<h1>🧠 Alzheimer's Support Chatbot</h1>
+<h3>By <span style='color:#FF4B4B; font-weight:bold;'>MANISH_RAWAT</span></h3>
+""", unsafe_allow_html=True)
+
 st.markdown("Welcome! This chatbot helps Alzheimer's patients with simple, friendly conversations.")
 st.info("""
 🧠 **How I Can Help You:**
