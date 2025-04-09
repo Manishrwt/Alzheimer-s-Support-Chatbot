@@ -6,7 +6,7 @@ import os
 import re
 
 # ✅ Load Gemini API key safely
-api_key = st.secrets.get("GEMINI_API_KEY", {}).get("api_key", None)
+api_key = st.secrets.get("api_key", None)
 
 if api_key is None:
     st.error("❌ Gemini API Key not found! Please add it to .streamlit/secrets.toml or Streamlit Cloud secrets.")
@@ -163,7 +163,10 @@ if st.session_state.messages:
 # ✅ Generate Gemini response
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     try:
-        convo = model.start_chat(history=[{"role": msg["role"], "parts": [msg["content"]]} for msg in st.session_state.messages if msg["role"] in ["user", "assistant"]])
+        convo = model.start_chat(history=[
+            {"role": msg["role"], "parts": [msg["content"]]}
+            for msg in st.session_state.messages if msg["role"] in ["user", "assistant"]
+        ])
         response = convo.send_message(st.session_state.messages[-1]["content"])
         bot_reply = response.text
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
