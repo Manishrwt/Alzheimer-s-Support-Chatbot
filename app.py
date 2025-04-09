@@ -1,18 +1,16 @@
 import streamlit as st
 import google.generativeai as genai
 import datetime
-import pyttsx3
 import json
 import os
-import speech_recognition as sr
 import re
 
-# ✅ Configure API
+# ✅ Configure Gemini API
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 
 # ✅ Streamlit Setup
-st.set_page_config(page_title="🧠 Alzheimer's Support Chatbot BY MANISH_RAWAT", page_icon="🧠")
+st.set_page_config(page_title="🧠 Alzheimer's Support ChatbotBY : MANISH_RAWAT", page_icon="🧠")
 st.title("🧠 Alzheimer's Support Chatbot")
 st.markdown("Welcome! This chatbot helps Alzheimer's patients with simple, friendly conversations.")
 st.info("""
@@ -26,7 +24,7 @@ st.info("""
 # ✅ Memory Save File
 MEMORY_FILE = "memory.json"
 
-# ✅ Init state
+# ✅ Init session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -36,29 +34,14 @@ if "memory" not in st.session_state:
 if "voice_enabled" not in st.session_state:
     st.session_state.voice_enabled = True
 
-# ✅ TTS Function
+# ✅ Dummy TTS for cloud
 def speak(text):
-    if st.session_state.voice_enabled:
-        engine = pyttsx3.init()
-        engine.say(text)
-        engine.runAndWait()
+    # Voice output disabled on cloud
+    pass
 
-# ✅ Voice Input Function
+# ✅ Dummy voice input for cloud
 def get_voice_input():
-    recognizer = sr.Recognizer()
-    mic = sr.Microphone()
-    with mic as source:
-        st.info("🎙️ Listening... Please speak now.")
-        recognizer.adjust_for_ambient_noise(source)
-        audio = recognizer.listen(source)
-    try:
-        text = recognizer.recognize_google(audio)
-        st.success(f"🗣️ You said: {text}")
-        return text
-    except sr.UnknownValueError:
-        st.warning("Sorry, I couldn't understand what you said.")
-    except sr.RequestError as e:
-        st.error(f"Could not request results; {e}")
+    st.warning("🎤 Voice input is not supported on Streamlit Cloud.")
     return None
 
 # ✅ Sidebar
@@ -92,7 +75,7 @@ with st.sidebar:
 
     if st.button("🔊 Toggle Voice Output"):
         st.session_state.voice_enabled = not st.session_state.voice_enabled
-        st.success(f"Voice output {'enabled' if st.session_state.voice_enabled else 'disabled'}")
+        st.success(f"Voice output {'enabled' if st.session_state.voice_enabled else 'disabled'} (local only)")
 
     if st.button("🧹 Clear Chat"):
         st.session_state.messages.clear()
@@ -132,36 +115,31 @@ if not st.session_state.messages:
     st.session_state.messages.append({"role": "assistant", "content": greeting})
     speak(greeting)
 
-# ✅ User input (text)
+# ✅ Text input
 user_input = st.text_input("👤 You:", key="user_input")
 
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-# ✅ Mic input
-if st.button("🎤 Speak Instead"):
-    voice_text = get_voice_input()
-    if voice_text:
-        st.session_state.messages.append({"role": "user", "content": voice_text})
+# ✅ Mic input disabled
+# if st.button("🎤 Speak Instead"):
+#     voice_text = get_voice_input()
+#     if voice_text:
+#         st.session_state.messages.append({"role": "user", "content": voice_text})
 
-# ✅ Memory check (lunch)
+# ✅ Memory capture
 if st.session_state.messages:
     last_user_msg = st.session_state.messages[-1]["content"].lower()
+
     if "i had" in last_user_msg and "lunch" in last_user_msg:
         st.session_state.memory["lunch_yesterday"] = last_user_msg
 
-# ✅ Custom memory response
-if st.session_state.messages:
-    last_user_msg = st.session_state.messages[-1]["content"].lower()
-
-    # Recall lunch
     if "what did i have for lunch yesterday" in last_user_msg:
         lunch = st.session_state.memory.get("lunch_yesterday")
         reply = f"You told me: {lunch}" if lunch else "I'm sorry, I don't remember what you had for lunch yesterday unless you tell me."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-    # Add Reminder
     elif re.search(r"remind me to (.+?) at (\d{1,2} ?[apAP][mM])", last_user_msg):
         match = re.search(r"remind me to (.+?) at (\d{1,2} ?[apAP][mM])", last_user_msg)
         task = match.group(1).strip()
@@ -171,19 +149,16 @@ if st.session_state.messages:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-    # Show reminders
     elif "what are my reminders" in last_user_msg or "reminders" in last_user_msg:
         reminders = st.session_state.memory.get("reminders", [])
         if reminders:
-            reply = "Here are your reminders:\n" + "\n".join(
-                [f"🔔 {r['task']} at {r['time']}" for r in reminders]
-            )
+            reply = "Here are your reminders:\n" + "\n".join([f"🔔 {r['task']} at {r['time']}" for r in reminders])
         else:
             reply = "You don't have any reminders saved yet."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-# ✅ Use Gemini model if latest message is from user
+# ✅ Use Gemini for replies
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     convo = model.start_chat(history=[
         {"role": msg["role"], "parts": [msg["content"]]}
