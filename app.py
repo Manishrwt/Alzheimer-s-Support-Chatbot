@@ -10,7 +10,7 @@ genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 
 # ✅ Streamlit Setup
-st.set_page_config(page_title="🧠 Alzheimer's Support ChatbotBY : MANISH_RAWAT", page_icon="🧠")
+st.set_page_config(page_title="🧠 Alzheimer's Support Chatbot BY : MANISH_RAWAT", page_icon="🧠")
 st.title("🧠 Alzheimer's Support Chatbot")
 st.markdown("Welcome! This chatbot helps Alzheimer's patients with simple, friendly conversations.")
 st.info("""
@@ -36,8 +36,7 @@ if "voice_enabled" not in st.session_state:
 
 # ✅ Dummy TTS for cloud
 def speak(text):
-    # Voice output disabled on cloud
-    pass
+    pass  # You can use pyttsx3 locally if needed
 
 # ✅ Dummy voice input for cloud
 def get_voice_input():
@@ -121,13 +120,7 @@ user_input = st.text_input("👤 You:", key="user_input")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-# ✅ Mic input disabled
-# if st.button("🎤 Speak Instead"):
-#     voice_text = get_voice_input()
-#     if voice_text:
-#         st.session_state.messages.append({"role": "user", "content": voice_text})
-
-# ✅ Memory capture
+# ✅ Memory capture logic
 if st.session_state.messages:
     last_user_msg = st.session_state.messages[-1]["content"].lower()
 
@@ -158,7 +151,7 @@ if st.session_state.messages:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-# ✅ Use Gemini for replies
+# ✅ Generate Gemini response
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     convo = model.start_chat(history=[
         {"role": msg["role"], "parts": [msg["content"]]}
@@ -172,7 +165,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
     except Exception as e:
         st.error(f"❌ Error: {e}")
 
-# ✅ Display Chat
+# ✅ Chat display
 st.divider()
 for msg in st.session_state.messages:
     if msg["role"] == "user":
