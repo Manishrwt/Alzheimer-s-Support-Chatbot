@@ -5,17 +5,15 @@ import json
 import os
 import re
 
-# ✅ Load Gemini API key safely
-api_key = st.secrets["api_key"]
-
-if api_key is None:
+# ✅ Load Gemini API key safely from Streamlit secrets
+try:
+    api_key = st.secrets["api_key"]
+except KeyError:
     st.error("❌ Gemini API Key not found! Please add it to .streamlit/secrets.toml or Streamlit Cloud secrets.")
     st.stop()
 
-# Configure the Gemini model with the API key
+# ✅ Configure Gemini model
 genai.configure(api_key=api_key)
-
-# Initialize the model
 model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 
 # ✅ Streamlit Setup
@@ -45,12 +43,7 @@ if "voice_enabled" not in st.session_state:
 
 # ✅ Dummy TTS for cloud
 def speak(text):
-    pass  # Replace with pyttsx3 locally if you want voice output
-
-# ✅ Dummy voice input for cloud
-def get_voice_input():
-    st.warning("🎤 Voice input is not supported on Streamlit Cloud.")
-    return None
+    pass
 
 # ✅ Sidebar
 with st.sidebar:
@@ -129,7 +122,7 @@ user_input = st.text_input("👤 You:", key="user_input")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-# ✅ Memory capture logic
+# ✅ Memory logic
 if st.session_state.messages:
     last_user_msg = st.session_state.messages[-1]["content"].lower()
 
@@ -160,7 +153,7 @@ if st.session_state.messages:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-# ✅ Generate Gemini response
+# ✅ Gemini response
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     try:
         convo = model.start_chat(history=[
