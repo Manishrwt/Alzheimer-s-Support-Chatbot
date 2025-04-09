@@ -5,18 +5,14 @@ import json
 import os
 import re
 
-# ✅ Load Gemini API key safely
-try:
-    api_key = st.secrets["api_key"]
-except KeyError:
-    st.error("❌ Gemini API Key not found! Please add it to .streamlit/secrets.toml or Streamlit Cloud secrets.")
-    st.stop()
+# ✅ Load Gemini API key safely from Streamlit secrets
+api_key = st.secrets["api_key"]  # Accessing directly now
 
-# Configure Gemini
+# Configure the Gemini model
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 
-# ✅ Streamlit setup
+# ✅ Streamlit Setup
 st.set_page_config(page_title="🧠 Alzheimer's Support Chatbot BY : MANISH_RAWAT", page_icon="🧠")
 st.title("🧠 Alzheimer's Support Chatbot")
 st.markdown("Welcome! This chatbot helps Alzheimer's patients with simple, friendly conversations.")
@@ -28,25 +24,27 @@ st.info("""
 - Just talk to me. I'm always here. ❤️
 """)
 
+# ✅ Memory Save File
 MEMORY_FILE = "memory.json"
 
+# ✅ Init session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
 if "memory" not in st.session_state:
     st.session_state.memory = {"reminders": []}
+
 if "voice_enabled" not in st.session_state:
     st.session_state.voice_enabled = True
 
+# ✅ Dummy TTS
 def speak(text):
-    pass  # Replace with pyttsx3 for local voice
-
-def get_voice_input():
-    st.warning("🎤 Voice input not supported on Streamlit Cloud.")
-    return None
+    pass  # Placeholder for local TTS
 
 # ✅ Sidebar
 with st.sidebar:
     st.header("🧠 Options")
+
     if st.button("💾 Save Memory"):
         with open(MEMORY_FILE, "w") as f:
             json.dump(st.session_state.memory, f)
@@ -66,14 +64,14 @@ with st.sidebar:
             st.warning("You have no reminders yet.")
 
     if st.button("💊 Medication Tracker"):
-        st.info("Say: 'Remind me to take aspirin at 9AM'.")
+        st.info("You can say: 'Remind me to take aspirin at 9AM'.")
 
     if st.button("👨‍⚕️ Emergency Contact"):
         st.info("Call:\n- Doctor: 📞 9876543210\n- Family: 📞 9123456780")
 
     if st.button("🔊 Toggle Voice Output"):
         st.session_state.voice_enabled = not st.session_state.voice_enabled
-        st.success(f"Voice output {'enabled' if st.session_state.voice_enabled else 'disabled'} (local only)")
+        st.success(f"Voice {'enabled' if st.session_state.voice_enabled else 'disabled'}")
 
     if st.button("🧹 Clear Chat"):
         st.session_state.messages.clear()
@@ -102,8 +100,8 @@ with col4:
 
 # ✅ Greeting
 now = datetime.datetime.now().hour
+greeting = "Good morning! 🌞" if 5 <= now < 12 else "Good afternoon! ☀️" if 12 <= now < 17 else "Good evening! 🌙"
 if not st.session_state.messages:
-    greeting = "Good morning! 🌞" if 5 <= now < 12 else "Good afternoon! ☀️" if 12 <= now < 17 else "Good evening! 🌙"
     st.session_state.messages.append({"role": "assistant", "content": greeting})
     speak(greeting)
 
@@ -114,28 +112,29 @@ if user_input:
 
 # ✅ Memory logic
 if st.session_state.messages:
-    last_user_msg = st.session_state.messages[-1]["content"].lower()
+    last_msg = st.session_state.messages[-1]["content"].lower()
 
-    if "i had" in last_user_msg and "lunch" in last_user_msg:
-        st.session_state.memory["lunch_yesterday"] = last_user_msg
+    if "i had" in last_msg and "lunch" in last_msg:
+        st.session_state.memory["lunch_yesterday"] = last_msg
 
-    if "what did i have for lunch yesterday" in last_user_msg:
+    if "what did i have for lunch yesterday" in last_msg:
         lunch = st.session_state.memory.get("lunch_yesterday")
-        reply = f"You told me: {lunch}" if lunch else "I'm sorry, I don't remember unless you tell me."
+        reply = f"You told me: {lunch}" if lunch else "I don’t remember your lunch from yesterday."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-    elif re.search(r"remind me to (.+?) at (\d{1,2} ?[apAP][mM])", last_user_msg):
-        match = re.search(r"remind me to (.+?) at (\d{1,2} ?[apAP][mM])", last_user_msg)
-        task, time = match.group(1).strip(), match.group(2).upper().replace(" ", "")
+    match = re.search(r"remind me to (.+?) at (\d{1,2} ?[apAP][mM])", last_msg)
+    if match:
+        task = match.group(1).strip()
+        time = match.group(2).upper().replace(" ", "")
         st.session_state.memory["reminders"].append({"task": task, "time": time})
         reply = f"Okay, I will remind you to {task} at {time}."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
-    elif "what are my reminders" in last_user_msg or "reminders" in last_user_msg:
+    elif "reminders" in last_msg:
         reminders = st.session_state.memory.get("reminders", [])
-        reply = "Here are your reminders:\n" + "\n".join([f"🔔 {r['task']} at {r['time']}" for r in reminders]) if reminders else "You don't have any reminders yet."
+        reply = "Here are your reminders:\n" + "\n".join([f"🔔 {r['task']} at {r['time']}" for r in reminders]) if reminders else "You don't have any reminders."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         speak(reply)
 
@@ -153,7 +152,10 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
     except Exception as e:
         st.error(f"❌ Gemini API Error: {e}")
 
-# ✅ Chat display
+# ✅ Chat Display
 st.divider()
 for msg in st.session_state.messages:
-    st.markdown(f"👤 **You:** {msg['content']}" if msg["role"] == "user" else f"🤖 **Bot:** {msg['content']}")
+    if msg["role"] == "user":
+        st.markdown(f"👤 **You:** {msg['content']}")
+    elif msg["role"] == "assistant":
+        st.markdown(f"🤖 **Bot:** {msg['content']}")
