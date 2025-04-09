@@ -23,7 +23,7 @@ model = genai.GenerativeModel(model_name="gemini-1.5-pro-latest")
 st.set_page_config(page_title="🧠 Alzheimer's Support Chatbot BY MANISH_RAWAT", page_icon="🧠")
 st.markdown("""
 <h1>🧠 Alzheimer's Support Chatbot</h1>
-<h3>By <span style='color:#FF4B4B; font-weight:bold;'>MANISH_RAWAT</span></h3>
+<h3>BY : <span style='color:#4DA6FF; font-weight:bold;'>MANISH_RAWAT</span></h3>
 """, unsafe_allow_html=True)
 
 st.markdown("Welcome! This chatbot helps Alzheimer's patients with simple, friendly conversations.")
