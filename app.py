@@ -7,7 +7,7 @@ import re
 
 # ✅ Load Gemini API key safely
 try:
-    api_key = st.secrets["GEMINI_API_KEY"]
+    api_key = st.secrets["GEMINI_API_KEY"]["api_key"]
     genai.configure(api_key=api_key)
 except KeyError:
     st.error("❌ Gemini API Key not found! Please add it to .streamlit/secrets.toml or Streamlit Cloud secrets.")
