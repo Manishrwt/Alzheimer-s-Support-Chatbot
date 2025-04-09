@@ -1,15 +1,18 @@
 import streamlit as st
 import google.generativeai as genai
 import datetime
-import pyttsx3
 import json
 import os
-import speech_recognition as sr
 import re
 
 # ✅ Deployment configuration
 IS_DEPLOYED = True  # Set to False for local testing
 GEMINI_API_KEY = "AIzaSyB-cEawYprfMTPOTKfzuhP8sx66-HLZ5vA"
+
+# ✅ Conditional imports for local use only
+if not IS_DEPLOYED:
+    import pyttsx3
+    import speech_recognition as sr
 
 # ✅ Configure API Key
 api_key = GEMINI_API_KEY if IS_DEPLOYED else st.secrets["GEMINI_API_KEY"]
@@ -152,6 +155,7 @@ if not IS_DEPLOYED and st.button("🎤 Speak Instead"):
 # ✅ Memory capture logic
 if st.session_state.messages:
     last_user_msg = st.session_state.messages[-1]["content"].lower()
+
     if "i had" in last_user_msg and "lunch" in last_user_msg:
         st.session_state.memory["lunch_yesterday"] = last_user_msg
 
