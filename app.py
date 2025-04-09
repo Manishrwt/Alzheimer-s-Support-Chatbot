@@ -6,7 +6,7 @@ import os
 import re
 
 # ✅ Load Gemini API key safely
-api_key = st.secrets.get("api_key", None)
+api_key = st.secrets["api_key"]
 
 if api_key is None:
     st.error("❌ Gemini API Key not found! Please add it to .streamlit/secrets.toml or Streamlit Cloud secrets.")
